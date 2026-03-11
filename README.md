@@ -1,2 +1,170 @@
-# special-question-for-a-special-person
-A romantic interactive webpage built with HTML, CSS, and JavaScript that asks a special question in a fun way. It features floating hearts, animated buttons, playful messages when “No” is clicked, and a confetti celebration when “Yes” is selected, creating a cute and engaging experience. 💖
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Special Question 💕</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffe0f0, #ffd6e7, #ffb3c6);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+  }
+  .hearts-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .heart-float {
+    position: absolute; font-size: 1.5rem;
+    animation: floatUp linear infinite;
+    opacity: 0.4;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(110vh) rotate(0deg); opacity: 0.4; }
+    100% { transform: translateY(-10vh) rotate(20deg); opacity: 0; }
+  }
+  .card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 50px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(255,100,150,0.3);
+    max-width: 420px; width: 90%;
+    position: relative; z-index: 1;
+    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .emoji { font-size: 4rem; margin-bottom: 15px; display: block; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  h1 { color: #d63384; font-size: 1.6rem; margin-bottom: 10px; }
+  p { color: #888; font-size: 1rem; margin-bottom: 30px; line-height: 1.5; }
+  .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 14px 36px; border: none; border-radius: 50px;
+    font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-yes {
+    background: linear-gradient(135deg, #ff6b9d, #ff3d7f);
+    color: white;
+    box-shadow: 0 6px 20px rgba(255,61,127,0.4);
+  }
+  .btn-yes:hover { transform: scale(1.08); box-shadow: 0 8px 25px rgba(255,61,127,0.5); }
+  .btn-no {
+    background: #f0f0f0; color: #aaa;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.15s;
+  }
+  .no-msg { color: #f472b6; font-size: 0.9rem; margin-top: 18px; min-height: 22px; font-style: italic; }
+
+  /* Success screen */
+  .success { display: none; }
+  .success .emoji { font-size: 5rem; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+  .success h1 { font-size: 2rem; color: #d63384; }
+  .success p { font-size: 1.1rem; color: #e91e8c; font-weight: bold; }
+  .confetti-piece {
+    position: fixed; width: 10px; height: 10px; border-radius: 2px;
+    animation: confettiFall linear forwards;
+    z-index: 999;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hearts-bg" id="heartsBg"></div>
+
+<div class="card" id="mainCard">
+  <span class="emoji">💝</span>
+  <h1>Hey, I have a question for you...</h1>
+  <p>You mean a lot to me, and I'd love to spend some special time together. So...</p>
+  <h1 style="font-size:1.8rem; margin-bottom:25px;">Will you go on a date with me? 🌹</h1>
+  <div class="buttons">
+    <button class="btn btn-yes" onclick="sayYes()">💖 Yes!</button>
+    <button class="btn btn-no" id="noBtn" onclick="sayNo()">No</button>
+  </div>
+  <p class="no-msg" id="noMsg"></p>
+</div>
+
+<div class="card success" id="successCard">
+  <span class="emoji">🥰</span>
+  <h1>Yay!! 🎉</h1>
+  <p style="font-size:1.4rem; color:#d63384; margin-bottom:10px;">I Love You So Much!</p>
+  <p>This is going to be the best date ever! 💕✨</p>
+</div>
+
+<script>
+  const noMessages = [
+    "Are you sure? 🥺",
+    "Please reconsider... 🙏",
+    "My heart is breaking! 💔",
+    "One more chance? 👉👈",
+    "Pretty please? 🌸",
+    "I'll be on my best behavior! 😇",
+    "I promise it'll be fun! 🎉",
+    "Don't leave me hanging! 😭",
+    "You sure sure? 🤔",
+    "Last chance... 🥹"
+  ];
+  let noCount = 0;
+
+  // Floating hearts background
+  const bg = document.getElementById('heartsBg');
+  const hEmojis = ['💕','💗','💓','💖','🌸','✨'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart-float';
+    h.textContent = hEmojis[Math.floor(Math.random() * hEmojis.length)];
+    h.style.left = Math.random() * 100 + '%';
+    h.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+    h.style.animationDuration = (5 + Math.random() * 8) + 's';
+    h.style.animationDelay = (Math.random() * 8) + 's';
+    bg.appendChild(h);
+  }
+
+  function sayNo() {
+    const msg = noMessages[noCount % noMessages.length];
+    document.getElementById('noMsg').textContent = msg;
+    const btn = document.getElementById('noBtn');
+    // Make the No button smaller each time
+    const size = Math.max(0.6, 1 - noCount * 0.08);
+    btn.style.transform = `scale(${size})`;
+    btn.style.opacity = Math.max(0.3, 1 - noCount * 0.07);
+    noCount++;
+  }
+
+  function sayYes() {
+    document.getElementById('mainCard').style.display = 'none';
+    const s = document.getElementById('successCard');
+    s.style.display = 'block';
+    s.style.animation = 'popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    launchConfetti();
+  }
+
+  function launchConfetti() {
+    const colors = ['#ff6b9d','#ff3d7f','#ffb3c6','#ffd6e7','#ff9cc2','#fff','#ffdd57'];
+    for (let i = 0; i < 80; i++) {
+      setTimeout(() => {
+        const c = document.createElement('div');
+        c.className = 'confetti-piece';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.width = (6 + Math.random() * 8) + 'px';
+        c.style.height = (6 + Math.random() * 8) + 'px';
+        c.style.animationDuration = (2 + Math.random() * 2) + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 4000);
+      }, i * 30);
+    }
+  }
+</script>
+</body>
+</html>
